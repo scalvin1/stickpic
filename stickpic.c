@@ -68,7 +68,7 @@ check_block (unsigned char *buf, int buflen, double *mean, double *stddev)
 {
 	int i;
 	double mean_ = 0;
-	double tmp = 0;
+//	double tmp = 0;
 	double stddev_ = 0;
 	for (i = 0; i < buflen; i++) {
 //              printf("(%d,%d)", i, buf[i]);
@@ -374,7 +374,7 @@ main (int argc, char **argv)
 	fprintf(f, "\n");
 	fclose(f);
 
-	return;
+	return 0;
 
 }
 
