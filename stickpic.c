@@ -62,7 +62,7 @@ handle (const char *string, int error)
 		exit (EXIT_FAILURE);
 	}
 }
-
+/*
 void
 check_block (unsigned char *buf, int buflen, double *mean, double *stddev)
 {
@@ -89,6 +89,7 @@ check_block (unsigned char *buf, int buflen, double *mean, double *stddev)
 
 	*mean = mean_;
 }
+*/
 
 int
 main (int argc, char **argv)
@@ -323,7 +324,7 @@ main (int argc, char **argv)
 	k = 0;
 	for (j = 0; j < picy; j++) {
 		for (i = 0; i < picx; i++) {
-			getcolor(colorpointer,  data[k], 2, valmin, valmax); //use block stddev
+			getcolor(colorpointer,  data[k], 2, valmin, valmax); //use jet colormap
 
 //			getcolor(colorpointer, (short int) (100.0*stddev), 1, 0, 25500); //use block stddev
 //			getcolor(colorpointer, (short int) (100.0*doubletmp), 1, 0, 25500); //use block mean value
@@ -358,7 +359,7 @@ main (int argc, char **argv)
 		gdImageJpeg (im, out, jpegquality);
 		fclose (out);
 	}
-	printf("maxstddev = %g\n", maxstddev);
+//	printf("maxstddev = %g\n", maxstddev);
 // Clean up
 	gdImageDestroy (im);
 
