@@ -1,10 +1,16 @@
-# stickpic
+# stickpic; generate block device and file compressibility maps
 
 This is a simple tool to generate a map of file or block device content compressibility in the form of a png image.
 It uses the minilzo library to work out the compressibility of a block and translates this into one of three optional colormaps.
 
 This is useful to get a visual impression about where the data is on a disk drive, what type of data it is, how filesystems are
 behaving and how or if TRIM is working (on SSDs). It is also useful to see thin provisioning in effect on SD cards.
+
+Here is an example of a 500GB SSD before and after fstrim operation. It can be seen how some areas become more compressible (black) as they are returned as zeros after the trim operation. (Easiest to see with the cross-eye 3D method decribed for example here: https://www.kula3d.com/how-to-use-the-cross-eyed-method
+
+![500GB SSD before fstrim](doc/SSD.png)
+![500GB SSD after fstrim](doc/SSDtrimmed.png)
+
 
 While TRIM usage in SSDs is generally working and people have a general idea about this, SD cards can also benefit from occasional
 trims. The wear levelling will have less pressure put on it and the cards will in general be a little bit faster.
@@ -19,8 +25,10 @@ since the memory controller will mark the flash as 'free/dont care' and returns 
 quickly when such blocks are read. It is important to understand that not all cards will return zeros when trimmed areas are accessed.
 Apparently sometimes such areas will be pointed to internal flash parts containing some data (see 'thin provisioning', the devive will
 always be bigger and contain internally more memory capacity than what it advertises to be able to function efficiently). While some
-SSDs promise to return zeros when trimmed areas are accessed (deterministically return zero on trim), SD cards apparently don't do this.
-Some SSDs return determistic zeros (Linux then can rely on the promise), some promise to return deterministic data (i.e. always the same at the same address), and some don't even promise to always return the same data from such areas! Check hdparm -I /dev/SSDdeviceName.
+SSDs promise to return zeros when trimmed areas are accessed (deterministically return zero on trim), SD cards apparently 
+don't do this. Some SSDs return determistic zeros (Linux then can rely on the promise), some promise to return deterministic data 
+(i.e. always the same at the same address), and some don't even promise to always return the same data from such areas!
+Check hdparm -I /dev/SSDdeviceName.
 
 All SD cards in my possession can do the blkdiscard. It seems like they all implement this function. The Windows SD formatter tool by
 the SD consortium tries to do a blkdiscard on the devices, but from my observations it also cannot do it through standard card readers.
@@ -30,14 +38,16 @@ blkdiscard.
 
 The tool will only read over your data and compress every block for compressibility assessment.
 
-Here are some examples. First, an 8GB SD card used in a raspberry pi for quite a while. It contains a btrfs filesystem. The lighter the color, the less compressible the data is. Black would be areas with zeros or highly compressible data, then through red, yellow and white, data is less compressible (i.e. already compressed).
+Here are some examples. First, an 8GB SD card used in a raspberry pi for quite a while. It contains a btrfs filesystem.
+The lighter the color, the less compressible the data is. Black would be areas with zeros or highly compressible data,
+then through red, yellow and white, data is less compressible (i.e. already compressed).
 
 ![8GB SD before blkdiscard](doc/example01.png)
 
 Now I issued a 'blkdiscard -v /dev/mmcblk0' on the device (note that this is a scary dangerous command, which, used on an SSD,
 would nuke all your data into nirvana within milliseconds, so be very careful to get the device name right). The result is this:
 
-![8GB SD before blkdiscard](doc/example02.png)
+![8GB SD after blkdiscard](doc/example02.png)
 
 So what happened here? The first roughly half of the SD card now looks highly compressible (black). I checked, seems to be all zeros.
 The last two quarters of the drive is a repetitive pattern of random data that was not in these places before.
