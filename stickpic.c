@@ -1,29 +1,27 @@
 #define _LARGEFILE64_SOURCE
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+//#include <stdlib.h>
+//#include <unistd.h>
 #include <errno.h>
-#include <time.h>
-#include <signal.h>
+//#include <time.h>
+//#include <signal.h>
 #include <sys/fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/fs.h>
 
 #include <math.h>
-#include <string.h>
+//#include <string.h>
 #include <gd.h>
-#include <gdfonts.h>
-#include <gdfontt.h>
-#include <gdfontl.h>
+//#include <gdfonts.h>
+//#include <gdfontt.h>
+//#include <gdfontl.h>
 
 //fstat:
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
-//#define BLOCKSIZE 1*1024
-//#define TIMEOUT 30
 
 #include "minilzo.h"
 
@@ -35,24 +33,168 @@ static HEAP_ALLOC(wrkmem, LZO1X_1_MEM_COMPRESS);
 
 
 
-void getcolor (int *colorpointer, double value, int colormap, double minValue, double maxValue);
-
-/*
-inline int
-random_number (double max)	// between zero and max
-{
-	return (int) ((max + 1) * random () / (RAND_MAX + 1.0));
-}
 
 void
-bleachcolor (int *colorpointer, float factor)
+getcolor (int *colorpointer, double value, int colormap, double minValue, double maxValue)
 {
-        // factor = 0 causes identity operation
-        colorpointer[0] = (int) (((float) colorpointer[0] + factor * 255.0) / (factor + 1.0));
-        colorpointer[1] = (int) (((float) colorpointer[1] + factor * 255.0) / (factor + 1.0));
-        colorpointer[2] = (int) (((float) colorpointer[2] + factor * 255.0) / (factor + 1.0));
+	int color = 0;
+	int r = 0;
+	int g = 0;
+	int b = 0;
+	int select = 1;
+	double tmp = value - minValue;
+	//cout << "Landscape::getcolor()  min_h = " << min_h << ", max_h = " << max_h << endl;
+	//printf("x%d, %d, %d\n", colorpointer[0], colorpointer[1], colorpointer[2]);
+	if (maxValue - minValue == 0) {	// Avoid floating point exception (div by zero)
+		colorpointer[0] = 255;
+		colorpointer[1] = 255;
+		colorpointer[2] = 255;
+		return;
+	}
+	if(colormap == 0){ // b/w
+		color = (int) (255 * tmp / (maxValue - minValue));
+		if (color > 255) {
+			color = 255;
+		}
+		r = color;
+		g = color;
+		b = color;
+	}
+	if(colormap == 1){ //density ("hot")
+		color = (int) (3 * 255 * tmp /(maxValue - minValue));
+		if (color > 3 * 255) {	// what should we do when exceeding the colormap?
+			select = 5;	// '4' makes it blue (very obnoxious), '5' unsuspiciously white.
+			goto switchlabel_1;
+		}
+		if (color > 2 * 255) {
+			select = 3;
+			goto switchlabel_1;
+		}
+		if (color > 255) {
+			select = 2;
+			goto switchlabel_1;
+		}
+		select = 1;
+		goto switchlabel_1;
+
+	switchlabel_1:
+		switch (select) {
+		case 5:
+			{
+				r = 255;	//make it uniform WHITE, e.g. when exceeding limit...
+				g = 255;
+				b = 255;
+				break;
+			}
+		case 4:
+			{
+				r = 0;	//make it uniform blue, e.g. when exceeding limit...
+				g = 0;
+				b = 255;
+				break;
+			}
+		case 3:
+			{
+				r = 255;
+				g = 255;
+				b = color - 2 * 255;
+				break;
+			}
+		case 2:
+			{
+				r = 255;
+				g = color - 255;
+				b = 0;
+				break;
+			}
+		case 1:
+			{
+				r = color;
+				g = 0;
+				b = 0;
+				break;
+			}
+		}	//switch
+
+	}
+	if(colormap == 2){ // ("jet")
+		color = (int) ((4 * 256 -1) * tmp /(maxValue - minValue));
+		if (color > 4*256 - 1) {
+//			color = 4*256 - 1;
+			select = 6;
+			goto switchlabel_2;
+		}
+
+		if (color > 3 * 256 + 127) {
+			select = 5;
+			goto switchlabel_2;
+		}
+		if (color > 2 * 256 + 127) {
+			select = 4;
+			goto switchlabel_2;
+		}
+		if (color > 256 + 127) {
+			select = 3;
+			goto switchlabel_2;
+		}
+		if (color > 127) {
+			select = 2;
+			goto switchlabel_2;
+		}
+		select = 1;
+		goto switchlabel_2;
+
+	switchlabel_2:
+		switch (select) {
+		case 6:
+			{
+				r = 255;
+				g = 255;
+				b = 255;
+				break;
+			}
+		case 5:
+			{
+				r = 255 - color + 3*256 + 128;
+				g = 0;
+				b = 0;
+				break;
+			}
+		case 4:
+			{
+				r = 255;
+				g = 255 - color + 2*256 + 128;
+				b = 0;
+				break;
+			}
+		case 3:
+			{
+				r = color - 256 - 128;
+				g = 255;
+				b = 255 - color + 256 + 128;
+				break;
+			}
+		case 2:
+			{
+				r = 0;
+				g = color - 128;
+				b = 255;
+				break;
+			}
+		case 1:
+			{
+				r = 0;
+				g = 0;
+				b = 128 + color;
+				break;
+			}
+		}	//switch
+
+	}
+	colorpointer[0] = r;
+	colorpointer[1] = g;
+	colorpointer[2] = b;
 }
-*/
 
 void
 handle (const char *string, int error)
@@ -62,34 +204,6 @@ handle (const char *string, int error)
 		exit (EXIT_FAILURE);
 	}
 }
-/*
-void
-check_block (unsigned char *buf, int buflen, double *mean, double *stddev)
-{
-	int i;
-	double mean_ = 0;
-//	double tmp = 0;
-	double stddev_ = 0;
-	for (i = 0; i < buflen; i++) {
-//              printf("(%d,%d)", i, buf[i]);
-		mean_ += (int) buf[i];
-	}
-//      printf("\n");
-	mean_ = mean_ / buflen;
-//      printf("blockmean: %.3g\n", mean);
-
-	//stddev:
-	for (i = 0; i < buflen; i++) {
-//              printf("(%d,%d)", i, buf[i]);
-		stddev_ += ((double) buf[i] - mean_) * ((double) buf[i] - mean_);
-	}
-	stddev_ = stddev_ / buflen;
-	*stddev = sqrt (stddev_);
-//	printf ("blockmean: %.3g stddev: %.3g\n", mean, stddev);
-
-	*mean = mean_;
-}
-*/
 
 int
 main (int argc, char **argv)
@@ -241,7 +355,10 @@ main (int argc, char **argv)
 		if(data[k] < valmin) valmin = data[k];
 		if(data[k] > valmax) valmax = data[k];
 	}
-
+	if((valmax-valmin)<0.0001){ // all values are the same...
+		valmax = 1.0;
+		valmin = 0.0;
+	}
 //      write:
 
 
@@ -377,203 +494,4 @@ main (int argc, char **argv)
 
 	return 0;
 
-}
-
-// compliant filesize function from
-//https://www.securecoding.cert.org/confluence/display/seccode/FIO19-C.+Do+not+use+fseek%28%29+and+ftell%28%29+to+compute+the+size+of+a+file
-/*
-FILE *fp;
-long file_size;
-char *buffer;
-struct stat stbuf;
-int fd;
-
-fd = open("foo.bin", O_RDONLY);
-if (fd == -1) {
-  // Handle Error 
-}
-
-fp = fdopen(fd, "rb");
-if (fp == NULL) {
-  // Handle Error 
-}
-
-if (fstat(fd, &stbuf) == -1) {
-  // Handle Error 
-}
-
-file_size = stbuf.st_size;
-
-buffer = (char*)malloc(file_size);
-if (buffer == NULL) {
-  // Handle Error 
-}
-*/
-
-void
-getcolor (int *colorpointer, double value, int colormap, double minValue, double maxValue)
-{
-	int color = 0;
-	int r = 0;
-	int g = 0;
-	int b = 0;
-	int select = 1;
-	double tmp = value - minValue;
-	//cout << "Landscape::getcolor()  min_h = " << min_h << ", max_h = " << max_h << endl;
-	//printf("x%d, %d, %d\n", colorpointer[0], colorpointer[1], colorpointer[2]);
-	if (maxValue - minValue == 0) {	// Avoid floating point exception (div by zero)
-		//printf ("Will be single colour. Probably ocean. Exiting.\n");
-		//exit (1);
-		colorpointer[0] = 255;
-		colorpointer[1] = 255;
-		colorpointer[2] = 255;
-		return;
-	}
-	if(colormap == 0){ // b/w
-		color = (int) (255 * tmp / (maxValue - minValue));
-		if (color > 255) {
-			color = 255;
-		}
-		r = color;
-		g = color;
-		b = color;
-	}
-	if(colormap == 1){ //density ("hot")
-		color = (int) (3 * 255 * tmp /(maxValue - minValue));
-//		if (color > 3*255) {
-//			color = 3*255;
-//		}
-
-		if (color > 3 * 255) {	// what should we do when exceeding the colormap?
-			select = 5;	// '4' makes it blue (very obnoxious), '5' unsuspiciously white.
-			goto switchlabel_1;
-		}
-		if (color > 2 * 255) {
-			select = 3;
-			goto switchlabel_1;
-		}
-		if (color > 255) {
-			select = 2;
-			goto switchlabel_1;
-		}
-		select = 1;
-		goto switchlabel_1;
-
-	switchlabel_1:
-		switch (select) {
-		case 5:
-			{
-				r = 255;	//make it uniform WHITE, e.g. when exceeding limit...
-				g = 255;
-				b = 255;
-				break;
-			}
-		case 4:
-			{
-				r = 0;	//make it uniform blue, e.g. when exceeding limit...
-				g = 0;
-				b = 255;
-				break;
-			}
-		case 3:
-			{
-				r = 255;
-				g = 255;
-				b = color - 2 * 255;
-				break;
-			}
-		case 2:
-			{
-				r = 255;
-				g = color - 255;
-				b = 0;
-				break;
-			}
-		case 1:
-			{
-				r = color;
-				g = 0;
-				b = 0;
-				break;
-			}
-		}	//switch
-
-	}
-	if(colormap == 2){ // ("jet")
-		color = (int) ((4 * 256 -1) * tmp /(maxValue - minValue));
-		if (color > 4*256 - 1) {
-//			color = 4*256 - 1;
-			select = 6;
-			goto switchlabel_2;
-		}
-
-		if (color > 3 * 256 + 127) {
-			select = 5;
-			goto switchlabel_2;
-		}
-		if (color > 2 * 256 + 127) {
-			select = 4;
-			goto switchlabel_2;
-		}
-		if (color > 256 + 127) {
-			select = 3;
-			goto switchlabel_2;
-		}
-		if (color > 127) {
-			select = 2;
-			goto switchlabel_2;
-		}
-		select = 1;
-		goto switchlabel_2;
-
-	switchlabel_2:
-		switch (select) {
-		case 6:
-			{
-				r = 255;
-				g = 255;
-				b = 255;
-				break;
-			}
-		case 5:
-			{
-				r = 255 - color + 3*256 + 128;
-				g = 0;
-				b = 0;
-				break;
-			}
-		case 4:
-			{
-				r = 255;
-				g = 255 - color + 2*256 + 128;
-				b = 0;
-				break;
-			}
-		case 3:
-			{
-				r = color - 256 - 128;
-				g = 255;
-				b = 255 - color + 256 + 128;
-				break;
-			}
-		case 2:
-			{
-				r = 0;
-				g = color - 128;
-				b = 255;
-				break;
-			}
-		case 1:
-			{
-				r = 0;
-				g = 0;
-				b = 128 + color;
-				break;
-			}
-		}	//switch
-
-	}
-	colorpointer[0] = r;
-	colorpointer[1] = g;
-	colorpointer[2] = b;
 }
