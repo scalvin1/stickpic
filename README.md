@@ -2,6 +2,8 @@
 
 This is a simple tool to generate a map of file or block device content compressibility in the form of a png image.
 It uses the minilzo library to work out the compressibility of a block and translates this into one of three optional colormaps.
+It also depends on the GD graphics library, which is part of many Linux distributions and can also be found here:
+https://github.com/libgd/libgd/releases
 
 This is useful to get a visual impression about where the data is on a disk drive, what type of data it is, how filesystems are
 behaving and how or if TRIM is working (on SSDs). It is also useful to see thin provisioning in effect on SD cards.
