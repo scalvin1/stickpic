@@ -1,8 +1,13 @@
-all: stickpic
+all: stickpic stickpic-static
 
-stickpic: stickpic.c minilzo.c
+minilzo.o: minilzo.c minilzo.h
 	gcc -c minilzo.c -O3
-	gcc -o stickpic stickpic.c minilzo.o -O3 -lgd -lm
+
+stickpic: stickpic.c minilzo.o
+	gcc -o stickpic stickpic.c minilzo.o -O3 -lgd -lm -s
+
+stickpic-static: stickpic.c minilzo.o
+	gcc -o stickpic-static stickpic.c minilzo.o -O3 -lgd -lpng -lm -lz -static -s
 
 clean:
-	rm -f minilzo.o stickpic
+	rm -f minilzo.o stickpic stickpic-static
