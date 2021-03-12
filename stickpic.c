@@ -276,10 +276,11 @@ main (int argc, char **argv)
 //		picy++;
 
 	//find long side of picture, prefer ratio 4/3 or maximum of 1400
-
         //assume picture is ideally 1400x1050 (4/3), is 1.47Mpixel
         //assume picture is ideally 1600x1200 (4/3), is 1.92Mpixel
-	scalefac = (int) ceil(numblocks/1920000.0);
+
+	int targetpix = 300000; 
+	scalefac = (int) ceil(numblocks/targetpix);
 	blocksize = 512 * scalefac;
 	printf("blocksize should be %d (512 * %d)\n", blocksize, scalefac);
 
@@ -335,7 +336,10 @@ main (int argc, char **argv)
 	valmin = 1e9;
 	valmax = 0.0;
 	for (k = 0; k < picx* picy; k++) {
-		retval = read (fd, buffer, blocksize);
+//		retval = read (fd, buffer, blocksize);
+		inlen = 2048; //to get meaningful resolution
+		retval = read (fd, buffer, inlen);
+		lseek(fd, blocksize-inlen, SEEK_CUR);//forward to the next location (we dont want to compress EVERYTHING, takes too long)
 //		printf("%d\n", retval);
 //		doubletmp = print_block (&buffer[0]);
 //              handle("read", retval < 0);
