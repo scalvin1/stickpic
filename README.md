@@ -66,3 +66,7 @@ You can find some more patchy information on SD card 'erase' command CMD32, CMD3
 vocal people are highly confused and it is hard to come by reliable info. Thus this tool, play with it and you will understand
 this much better. At least it gives you a small window into the internal workings of these amazing little gadgets.
 
+
+
+Some links below.
+https://www.eevblog.com/forum/beginners/windows-app-to-erase-sd-cards/10/?wap2

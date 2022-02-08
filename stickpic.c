@@ -247,6 +247,7 @@ main (int argc, char **argv)
 	printf ("Determined file_size by fstat: %lu \n", file_size);
 	numblocks = file_size / 512;
 	if(file_size % 512) numblocks++;
+	printf ("Determined numblocks by fstat: %lu \n", numblocks);
 
 	if(file_size == 0){
 		printf ("Cannot use the fstat on this (is it a device?) Trying ioctl now.\n");
@@ -280,7 +281,7 @@ main (int argc, char **argv)
         //assume picture is ideally 1600x1200 (4/3), is 1.92Mpixel
 
 	int targetpix = 300000; 
-	scalefac = (int) ceil(numblocks/targetpix);
+	scalefac = (int) ceil((double)numblocks/(double)targetpix);
 	blocksize = 512 * scalefac;
 	printf("blocksize should be %d (512 * %d)\n", blocksize, scalefac);
 
@@ -495,7 +496,7 @@ main (int argc, char **argv)
 	}
 	fprintf(f, "\n");
 	fclose(f);
-
+	printf("\n");
 	return 0;
 
 }
